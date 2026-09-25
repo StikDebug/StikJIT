@@ -262,7 +262,11 @@ try StikJIT.enableJIT(
 )
 ```
 
-Configure exactly one script in backend code: `.universal` or `.legacy` for the corresponding bundled script, or `.custom(URL)` for another established protocol. A custom script must be readable from the helper-extension process. For StikDebug requests, send the built-in filename for universal or legacy, or send the base64-encoded contents of the custom script. Do not expose this configuration to the user. The user-facing `forceScript` toggle only bypasses TXM detection and runs the configured script regardless.
+Configure exactly one script in backend code: `.universal` or `.legacy` for the corresponding bundled script, `.custom(URL)` for a script readable from the helper-extension process, or `.customBase64(String)` for base64-encoded UTF-8 script data held elsewhere. For StikDebug requests, send the built-in filename for universal or legacy, or send the base64-encoded contents of the custom script. Do not expose this configuration to the user. The user-facing `forceScript` toggle only bypasses TXM detection and runs the configured script regardless.
+
+```swift
+let selectedScript: StikJIT.Script = .customBase64(storedScriptBase64)
+```
 
 ### When the user resets the cache
 
@@ -272,7 +276,7 @@ Provide a **Reset Developer Disk Image** action that calls:
 try StikJIT.resetCachedDDI(at: paths)
 ```
 
-This removes only the three cached DDI files. The next preparation downloads them again if mounting is necessary.
+This removes only the five cached DDI files. The next preparation downloads them again if mounting is necessary.
 
 ## Configure the JIT methods
 

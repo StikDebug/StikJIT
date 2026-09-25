@@ -3,7 +3,8 @@ import Foundation
 enum BundledScript {
 
     static func source(for script: StikJIT.Script) throws -> String {
-        if case .custom(let url) = script {
+        switch script {
+        case .custom(let url):
             guard url.isFileURL else {
                 throw StikJITError.customScript("expected a file URL")
             }
@@ -18,6 +19,19 @@ enum BundledScript {
             } catch {
                 throw StikJITError.customScript("could not read \(url.path): \(error.localizedDescription)")
             }
+        case .customBase64(let encodedSource):
+            guard let data = Data(base64Encoded: encodedSource) else {
+                throw StikJITError.customScript("the provided script data is not valid base64")
+            }
+            guard let source = String(data: data, encoding: .utf8) else {
+                throw StikJITError.customScript("the decoded script data is not valid UTF-8")
+            }
+            guard !source.isEmpty else {
+                throw StikJITError.customScript("the decoded script is empty")
+            }
+            return source
+        case .universal, .legacy:
+            break
         }
 
         let bundle = Bundle(for: BundleToken.self)
