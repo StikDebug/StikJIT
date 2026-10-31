@@ -211,6 +211,19 @@ let paths = DDIPaths.default(
 
 Use the same `DDIPaths` for preparation, JIT enablement, and cache reset. Before iOS 26.4, StikJIT downloads and mounts the three-file personalized DDI. On iOS 26.4 and newer, it downloads and installs the five-file cryptex DDI, which additionally includes cryptex info and a root hash. Do not validate cached DDI versions or contents yourself; StikJIT selects and replaces the cache format required by the running OS.
 
+The default configuration discovers the remote pairing port and falls back to `49152` if discovery fails. A custom `rsdPort` disables discovery unless `automaticallyDiscoverRSDPort` is explicitly set to `true`.
+
+For Bonjour discovery from the helper extension, add these keys to the containing app's `Info.plist`:
+
+```xml
+<key>NSLocalNetworkUsageDescription</key>
+<string>Find the device's Remote Pairing service to enable JIT.</string>
+<key>NSBonjourServices</key>
+<array>
+    <string>_remotepairing._tcp</string>
+</array>
+```
+
 A successful DDI mount persists until the device reboots, so it normally needs to be mounted only once per boot.
 
 ## Built-in StikJIT: Call the APIs at the right time

@@ -66,17 +66,29 @@ public enum StikJIT {
 
         public var rsdPort: UInt16
 
+        public var automaticallyDiscoverRSDPort: Bool
+
         public var connectionTimeout: TimeInterval
 
         public init(deviceAddress: String = "10.7.0.1",
                     rsdPort: UInt16 = 49152,
+                    automaticallyDiscoverRSDPort: Bool? = nil,
                     connectionTimeout: TimeInterval = 5) {
             self.deviceAddress = deviceAddress
             self.rsdPort = rsdPort
+            self.automaticallyDiscoverRSDPort = automaticallyDiscoverRSDPort ?? (rsdPort == 49152)
             self.connectionTimeout = connectionTimeout
         }
 
         public static var `default`: Configuration { Configuration() }
+
+        func resolved() -> Configuration {
+            guard automaticallyDiscoverRSDPort else { return self }
+            var configuration = self
+            configuration.rsdPort = RemotePairingPortResolver.resolve(fallback: rsdPort, timeout: connectionTimeout)
+            configuration.automaticallyDiscoverRSDPort = false
+            return configuration
+        }
     }
 
     @available(*, deprecated, message: "Use enableJIT with ddiPaths to prepare the device before enabling JIT.")
@@ -87,7 +99,7 @@ public enum StikJIT {
                                  forceScript: Bool = false,
                                  progress: @escaping (String) -> Void = { _ in }) throws {
         let txmPresence = ProcessInfo.processInfo.txmPresence
-        let session = JITSession(pairingFilePath: pairingFile.path, configuration: configuration)
+        let session = JITSession(pairingFilePath: pairingFile.path, configuration: configuration.resolved())
         try session.enableJIT(targetPID: targetPID,
                               script: script,
                               forceScript: forceScript,
@@ -103,9 +115,10 @@ public enum StikJIT {
                                  forceScript: Bool = false,
                                  preparationProgress: @escaping (PreparationStage) -> Void = { _ in },
                                  progress: @escaping (String) -> Void = { _ in }) throws {
+        let resolvedConfiguration = configuration.resolved()
         let readiness = prepareDevice(pairingFile: pairingFile,
                                       paths: ddiPaths,
-                                      configuration: configuration,
+                                      configuration: resolvedConfiguration,
                                       progress: preparationProgress)
         let securityState: DeviceSecurityState
         switch readiness {
@@ -115,7 +128,7 @@ public enum StikJIT {
             throw StikJITError.deviceNotReady(reason)
         }
 
-        let session = JITSession(pairingFilePath: pairingFile.path, configuration: configuration)
+        let session = JITSession(pairingFilePath: pairingFile.path, configuration: resolvedConfiguration)
         try session.enableJIT(targetPID: targetPID,
                               script: script,
                               forceScript: forceScript,
@@ -132,6 +145,7 @@ public enum StikJIT {
                                      configuration: Configuration = .default,
                                      progress: @escaping (PreparationStage) -> Void = { _ in }) -> JITReadiness {
         progress(.checkingReachability)
+        let configuration = configuration.resolved()
         if let reason = EndpointProbe.failureReason(address: configuration.deviceAddress,
                                                     port: configuration.rsdPort,
                                                     timeout: configuration.connectionTimeout) {
@@ -170,10 +184,10 @@ public enum StikJIT {
 
     public static func isDDIMounted(pairingFile: URL,
                                     configuration: Configuration = .default) throws -> Bool {
-        try DDISession(pairingFilePath: pairingFile.path, configuration: configuration).isMounted()
+        try DDISession(pairingFilePath: pairingFile.path, configuration: configuration.resolved()).isMounted()
     }
 
-    @available(iOS 17.4, *)
+    @available(iOS 17.4, tvOS 17.4, *)
     public static func downloadDDIIfNeeded(to paths: DDIPaths,
                                            progress: @escaping (Double, String) -> Void = { _, _ in }) async throws {
         try await DeveloperDiskImageService.shared.downloadIfNeeded(to: paths, progress: progress)
@@ -183,7 +197,7 @@ public enum StikJIT {
                                 configuration: Configuration = .default,
                                 paths: DDIPaths,
                                 progress: @escaping (Double) -> Void = { _ in }) throws {
-        let session = DDISession(pairingFilePath: pairingFile.path, configuration: configuration)
+        let session = DDISession(pairingFilePath: pairingFile.path, configuration: configuration.resolved())
         try session.mountDDI(paths: paths, progress: progress)
     }
 }

@@ -96,7 +96,12 @@ struct DDIDownloadItem {
 
 enum DDIDownloadCatalog {
     static func items(for paths: DDIPaths) -> [DDIDownloadItem] {
-        let directory = DDIMountMethod.current == .cryptex ? "Xcode_iOS_DDI_Cryptex" : "Xcode_iOS_DDI_Personalized"
+#if os(tvOS)
+        let platform = "tvOS"
+#else
+        let platform = "iOS"
+#endif
+        let directory = DDIMountMethod.current == .cryptex ? "Xcode_\(platform)_DDI_Cryptex" : "Xcode_\(platform)_DDI_Personalized"
         let baseURL = URL(string: "https://github.com/doronz88/DeveloperDiskImage/raw/refs/heads/main/PersonalizedImages/\(directory)")!
         var items = [
             DDIDownloadItem(name: "BuildManifest.plist", destinationPath: paths.manifestPath, url: baseURL.appendingPathComponent("BuildManifest.plist")),
@@ -111,7 +116,7 @@ enum DDIDownloadCatalog {
     }
 }
 
-@available(iOS 17.4, *)
+@available(iOS 17.4, tvOS 17.4, *)
 public actor DeveloperDiskImageService {
 
     private static let sharedInstance = DeveloperDiskImageService()

@@ -1,5 +1,7 @@
 import Foundation
+#if !os(tvOS)
 @_implementationOnly import StikJITIOKit
+#endif
 
 enum TXMPresence {
     case present
@@ -25,6 +27,22 @@ enum TXMPresence {
 
 extension ProcessInfo {
     var txmPresence: TXMPresence {
+#if os(tvOS)
+        var systemInfo = utsname()
+        guard uname(&systemInfo) == 0 else { return .unknown }
+        let machineSize = MemoryLayout.size(ofValue: systemInfo.machine)
+        let identifier = withUnsafePointer(to: &systemInfo.machine) {
+            $0.withMemoryRebound(to: CChar.self, capacity: machineSize) {
+                String(cString: $0)
+            }
+        }
+        guard identifier.hasPrefix("AppleTV"),
+              let comma = identifier.firstIndex(of: ","),
+              let major = Int(identifier[identifier.index(identifier.startIndex, offsetBy: 7)..<comma]),
+              let minor = Int(identifier[identifier.index(after: comma)...]) else { return .unknown }
+        let version = operatingSystemVersion
+        return version.majorVersion >= 26 && (major > 14 || (major == 14 && minor >= 1)) ? .present : .absent
+#else
         let memoryMap = IORegistryEntryFromPath(kIOMainPortDefault, "IODeviceTree:/chosen/memory-map")
         guard memoryMap != 0 else { return .unknown }
 
@@ -38,5 +56,6 @@ extension ProcessInfo {
         guard let keys = keysCF as? [String] else { return .unknown }
 
         return keys.contains("TXM") ? .present : .absent
+#endif
     }
 }

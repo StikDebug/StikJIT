@@ -42,8 +42,17 @@ jobs:
 
       - name: Assemble XCFramework
         run: |
+          xcodebuild archive \
+            -project StikJIT.xcodeproj \
+            -scheme StikJIT-tvOS \
+            -destination 'generic/platform=tvOS' \
+            -archivePath build/StikJIT-tvOS \
+            SKIP_INSTALL=NO \
+            BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
+            CODE_SIGNING_ALLOWED=NO
           xcodebuild -create-xcframework \
             -framework build/StikJIT-iOS.xcarchive/Products/Library/Frameworks/StikJIT.framework \
+            -framework build/StikJIT-tvOS.xcarchive/Products/Library/Frameworks/StikJIT.framework \
             -output StikJIT.xcframework
 
       - name: Zip XCFramework
