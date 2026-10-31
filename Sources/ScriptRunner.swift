@@ -5,7 +5,7 @@ import JavaScriptCore
 final class ScriptRunner {
 
     private static let jitPageSize: UInt64 = 16384
-    private static let jitPageCommandLength = 19
+    private static let jitPageCommandLength = 26
     private static let commandsPerBatch = 128
 
     private let targetPID: Int32
@@ -124,21 +124,22 @@ final class ScriptRunner {
             buffer[start + 0] = UInt8(ascii: "$")
             buffer[start + 1] = UInt8(ascii: "M")
             writeHexAddress(pageAddress, into: &buffer, at: start + 2)
-            buffer[start + 11] = UInt8(ascii: ",")
-            buffer[start + 12] = UInt8(ascii: "1")
-            buffer[start + 13] = UInt8(ascii: ":")
-            buffer[start + 14] = UInt8(ascii: "6")
-            buffer[start + 15] = UInt8(ascii: "9")
-            buffer[start + 16] = UInt8(ascii: "#")
-            writeChecksum(into: &buffer, bodyStart: start + 1, hashIndex: start + 16)
+            buffer[start + 18] = UInt8(ascii: ",")
+            buffer[start + 19] = UInt8(ascii: "1")
+            buffer[start + 20] = UInt8(ascii: ":")
+            buffer[start + 21] = UInt8(ascii: "6")
+            buffer[start + 22] = UInt8(ascii: "9")
+            buffer[start + 23] = UInt8(ascii: "#")
+            writeChecksum(into: &buffer, bodyStart: start + 1, hashIndex: start + 23)
         }
 
         return buffer
     }
 
+    // All 16 digits: with extended virtual addressing, JIT regions can sit above 64 GB (0xFFFFFFFFF).
     private static func writeHexAddress(_ address: UInt64, into buffer: inout [UInt8], at index: Int) {
-        for nibble in 0..<9 {
-            let shift = UInt64((8 - nibble) * 4)
+        for nibble in 0..<16 {
+            let shift = UInt64((15 - nibble) * 4)
             buffer[index + nibble] = hexDigit(UInt8((address >> shift) & 0xf))
         }
     }
