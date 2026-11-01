@@ -12,11 +12,19 @@ An iOS and tvOS XCFramework that enables JIT for another process over the device
 
 StikJIT is self-contained and bundles the idevice FFI and its JIT scripts.
 
+## Scope
+
+StikJIT handles device preparation, tunnel creation, Developer Disk Image (DDI) downloading and mounting, debugger attachment, and JIT script execution for apps enabling JIT on the same device.
+
+Pairing-file creation, import, storage, and placement are outside the library's scope. For pairing-file creation and placement, follow [StikDebug's pairing-file instructions](https://github.com/StikDebug/StikDebug-Guide/blob/main/pairing_file.md). The host app supplies StikJIT with the path to a readable pairing file.
+
 ## Integration
 
 For iOS 26 JIT support, StikDebug URL integration, Built-in StikJIT setup, API usage, requirements, and recommended app settings, see [Integrating StikJIT](INTEGRATION.md).
 
 ## Build
+
+Xcode 27.1 or newer is recommended for building StikJIT or an app that uses its release XCFramework. Earlier Xcode versions are untested and may not be compatible with the generated Swift interfaces. The framework supports iOS 17.4+ and tvOS 17.4+. Release CI uses the default Xcode on the `xcode-27` runner and verifies the packaged XCFramework by building a small iOS app with the same deployment target.
 
 ```sh
 xcodegen generate

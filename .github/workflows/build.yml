@@ -58,6 +58,51 @@ jobs:
       - name: Zip XCFramework
         run: zip -ry StikJIT.xcframework.zip StikJIT.xcframework
 
+      - name: Extract release archive
+        run: |
+          mv StikJIT.xcframework build/StikJIT-assembled.xcframework
+          unzip -q StikJIT.xcframework.zip
+
+      - name: Check framework bundles and Swift interfaces
+        run: |
+          marketing_version="$(ruby -ryaml -e 'puts YAML.load_file("project.yml")["settings"]["base"]["MARKETING_VERSION"]')"
+          build_version="$(ruby -ryaml -e 'puts YAML.load_file("project.yml")["settings"]["base"]["CURRENT_PROJECT_VERSION"]')"
+          for platform in ios tvos; do
+            framework="StikJIT.xcframework/$platform-arm64/StikJIT.framework"
+            plutil -lint "$framework/Info.plist"
+            test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$framework/Info.plist")" = com.stik.StikJIT
+            test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundlePackageType' "$framework/Info.plist")" = FMWK
+            test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$framework/Info.plist")" = StikJIT
+            test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$framework/Info.plist")" = "$marketing_version"
+            test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$framework/Info.plist")" = "$build_version"
+            test "$(/usr/libexec/PlistBuddy -c 'Print :MinimumOSVersion' "$framework/Info.plist")" = '17.4'
+            test "$(xcrun vtool -show-build "$framework/StikJIT" | awk '/minos/ {print $2}')" = '17.4'
+            test -s "$framework/StikJIT"
+            test -s "$framework/universal.js"
+            test -s "$framework/legacy.js"
+            if [ "$platform" = ios ]; then sdk=iphoneos; else sdk=appletvos; fi
+            for interface in "$framework/Modules/StikJIT.swiftmodule/"*.swiftinterface; do
+              xcrun swift-frontend -typecheck-module-from-interface "$interface" \
+                -sdk "$(xcrun --sdk "$sdk" --show-sdk-path)" \
+                -module-cache-path "$PWD/build/interface-cache-$platform" \
+                -module-name StikJIT
+            done
+          done
+
+      - name: Generate import app
+        run: xcodegen generate --spec Tests/FrameworkImport/project.yml
+
+      - name: Build import app
+        run: |
+          xcodebuild build \
+            -project Tests/FrameworkImport/FrameworkImport.xcodeproj \
+            -scheme FrameworkImport \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build/FrameworkImport \
+            CODE_SIGNING_ALLOWED=NO
+          plutil -lint build/FrameworkImport/Build/Products/Release-iphoneos/FrameworkImport.app/Frameworks/StikJIT.framework/Info.plist
+
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:

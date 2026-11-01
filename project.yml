@@ -12,6 +12,7 @@ settings:
     MARKETING_VERSION: "2.0.0"
     CURRENT_PROJECT_VERSION: "11"
     CLANG_CXX_LIBRARY: "libc++"
+    GENERATE_INFOPLIST_FILE: YES
 
 targets:
   StikJIT:
@@ -32,6 +33,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.stik.StikJIT
         PRODUCT_NAME: StikJIT
+        CURRENT_PROJECT_VERSION: "$(inherited)"
         DEFINES_MODULE: YES
         BUILD_LIBRARY_FOR_DISTRIBUTION: YES
         SKIP_INSTALL: NO
@@ -65,6 +67,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.stik.StikJIT
         PRODUCT_NAME: StikJIT
+        CURRENT_PROJECT_VERSION: "$(inherited)"
         DEFINES_MODULE: YES
         BUILD_LIBRARY_FOR_DISTRIBUTION: YES
         SKIP_INSTALL: NO
