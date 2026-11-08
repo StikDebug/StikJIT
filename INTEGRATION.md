@@ -422,7 +422,11 @@ Always surface the actual unreachable, download, mount, pairing, and script erro
 
 ## Request endorsement
 
-After completing Part 1, Part 2, or both, please get in touch with us in the [idevice Discord server](https://discord.gg/qtgv6QtYbV) or leave a GitHub issue/pull request, so we can endorse your project and offer support to your users. We review app submissions on a case-by-case basis and generally decline projects without an established user base, low-quality substantially AI-generated projects, and forks of apps that already have our endorsement.
+After completing the integration, review [StikDebug's supported apps and submission guidelines](https://github.com/StikDebug/StikDebug/blob/main/SUPPORTED_APPS.md). If your project meets the guidelines, follow the submission instructions there to request endorsement and official support.
+
+If your app stores its pairing file in its Documents directory and sets `UIFileSharingEnabled` to `true`, also submit a pull request to [idevice_pair](https://github.com/jkcoxson/idevice_pair) adding your app's name and pairing-file path. This allows users to place pairing files directly into your app using idevice_pair.
+
+Tools such as iloader, Impactor, and StikDebug often source their app lists from idevice_pair, so contributing there can also make your app available through those tools as they update their lists.
 
 # Final checklist
 
